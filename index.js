@@ -77,8 +77,38 @@ class Slider {
     });
   }
 
+  initPanel() {
+    const infoPanel = document.createElement("div");
+    infoPanel.classList.add("info-panel");
+    const heading = document.createElement("h4");
+    heading.innerText = "Info panel";
+    const slidersList = document.createElement("ul");
+    slidersList.classList.add("sliders-list");
+    this.element.appendChild(infoPanel);
+    infoPanel.appendChild(heading);
+    infoPanel.appendChild(slidersList);
+
+    this.sliders.forEach((slider) => {
+      const li = document.createElement("li");
+      li.setAttribute("data-name", slider.name);
+      const sliderValue = document.createElement("span");
+      sliderValue.classList.add("info-value");
+      sliderValue.innerText = slider.min;
+      const colorSquare = document.createElement("span");
+      colorSquare.style.backgroundColor = slider.color;
+      const sliderName = document.createElement("span");
+      sliderName.innerText = slider.name;
+      li.appendChild(sliderValue);
+      li.appendChild(colorSquare);
+      li.appendChild(sliderName);
+      slidersList.appendChild(li);
+    });
+  }
+
   drawSlider(slider, svg) {
     const angle = Math.floor((0 / (slider.max - slider.min)) * 360);
+
+    // console.log('angle', angle)
 
     const sliderGroup = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -97,32 +127,6 @@ class Slider {
 
     // handle
     this.drawHandle(slider.radius, sliderGroup, angle);
-  }
-
-  initPanel() {
-    const infoPanel = document.createElement("div");
-    infoPanel.classList.add("info-panel");
-    const heading = document.createElement("h4");
-    heading.innerText = "Info panel";
-    const slidersList = document.createElement("ul");
-    slidersList.classList.add("sliders-list");
-    this.element.appendChild(infoPanel);
-    infoPanel.appendChild(heading);
-    infoPanel.appendChild(slidersList);
-
-    this.sliders.forEach((slider) => {
-      const li = document.createElement("li");
-      const sliderValue = document.createElement("span");
-      sliderValue.innerText = slider.min;
-      const colorSquare = document.createElement("span");
-      colorSquare.style.backgroundColor = slider.color;
-      const sliderName = document.createElement("span");
-      sliderName.innerText = slider.name;
-      li.appendChild(sliderValue);
-      li.appendChild(colorSquare);
-      li.appendChild(sliderName);
-      slidersList.appendChild(li);
-    });
   }
 
   drawPath(group, radius, color, start, end, type) {
@@ -159,7 +163,10 @@ class Slider {
   updateSlider({ x, y }) {
     const path = this.closestSlider.querySelector(".active-path");
     const radius = this.closestSlider.getAttribute("rad");
-    const currentAngle = this.getMouseAngle({ x, y }) * 0.9 + 90;
+    const currentAngle = this.getMouseAngle({ x, y });
+
+    // console.log('currentAngle', currentAngle);
+    // debugger;
 
     path.setAttribute(
       "d",
@@ -168,22 +175,46 @@ class Slider {
         this.cy,
         radius,
         0,
-        currentAngle / (Math.PI / 180)
+        this.toDegrees(currentAngle)
       )
     );
 
     const handle = this.closestSlider.querySelector("circle");
     const handleCenter = this.getHandleCenter(currentAngle, radius);
+    // console.log('handleA', currentAngle)
     handle.setAttribute("cx", handleCenter.x);
     handle.setAttribute("cy", handleCenter.y);
+
+    this.updatePanel(currentAngle);
+  }
+
+  updatePanel(angle) {
+    // console.log(this.sliders);
+    const sliderId = this.closestSlider.getAttribute("id");
+    const targetInfo = document.querySelector(
+      `li[data-name="${sliderId}"] .info-value`
+    );
+    const activeSlider = this.sliders.filter(
+      (slider) => slider.name === sliderId
+    );
+    const activeSliderRange = activeSlider.reduce((acc, slider) => {
+      acc = slider.max - slider.min;
+      return acc;
+    }, 0);
+    let currentValue = (angle / this.PI2) * activeSliderRange;
+    const stepsNum = Math.round(currentValue / activeSlider[0].step);
+    currentValue = activeSlider[0].min + stepsNum + activeSlider[0].step;
+    targetInfo.innerText = currentValue;
   }
 
   getMouseAngle({ x, y }) {
     const angle = Math.atan2(y - this.cy, x - this.cx);
-    if (angle > (-Math.PI * 2) / 2 && angle < (-Math.PI * 2) / 4) {
-      return angle + Math.PI * 2 * 1.25;
+    if (angle > -this.PI2 / 2 && angle < -this.PI2 / 4) {
+      // console.log('newA', angle + this.PI2 * 1.25)
+      return angle + this.PI2 * 1.25;
     } else {
-      return angle + Math.PI * 2 * 0.25;
+      // console.log('newA', angle + this.PI2 * 0.25)
+      return angle + this.PI2 * 0.25;
     }
   }
 
@@ -221,6 +252,10 @@ class Slider {
       x: centerX + radius * Math.cos(angleInRadians),
       y: centerY + radius * Math.sin(angleInRadians),
     };
+  }
+
+  toDegrees(angle) {
+    return angle / (Math.PI / 180);
   }
 }
 
