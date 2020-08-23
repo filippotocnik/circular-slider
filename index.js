@@ -64,7 +64,44 @@ class Slider {
       this.mouseDown = false;
       this.activeSlider = null;
     });
+
+    svgWrapper.addEventListener("touchstart", (event) => {
+      if (this.mouseDown) return;
+      this.mouseDown = true;
+
+      const { x, y } = this.getMouseCoordinates(
+        svgWrapper,
+        event.clientX,
+        event.clientY
+      );
+
+      this.setActiveSlider({x, y});
+
+      // update slider
+      this.updateSlider({ x, y });
+    });
+
+    svgWrapper.addEventListener("touchmove", (event) => {
+      if (!this.mouseDown) return;
+      event.preventDefault();
+      const { x, y } = this.getMouseCoordinates(
+        svgWrapper,
+        event.clientX,
+        event.clientY
+      );
+
+      // update slider
+      this.updateSlider({ x, y });
+    });
+
+    svgWrapper.addEventListener("touchend", (event) => {
+      if (!this.mouseDown) return;
+      this.mouseDown = false;
+      this.activeSlider = null;
+    });
   }
+
+  
 
   getMouseCoordinates(element, eventX, eventY) {
     const containerRect = element.getBoundingClientRect();
