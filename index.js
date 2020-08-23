@@ -46,48 +46,13 @@ class Slider {
     svg.appendChild(sliderGroup);
 
     // bg
-    const path1 = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "path"
-    );
-    path1.setAttribute(
-      "d",
-      this.describeArc(this.cx, this.cy, this.slider.radius, 0, 359)
-    );
-    path1.style.stroke = "#ccc";
-    path1.style.strokeWidth = 25;
-    path1.style.fill = "none";
-    path1.setAttribute("stroke-dasharray", "10 2");
-    sliderGroup.appendChild(path1);
-
+    this.drawPath(sliderGroup, 0, 359, '#ccc');
+    
     // slider
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute(
-      "d",
-      this.describeArc(this.cx, this.cy, this.slider.radius, 0, 180)
-    );
-    path.style.stroke = this.slider.color;
-    path.style.strokeWidth = 25;
-    path.style.fill = "none";
-    path.setAttribute("stroke-dasharray", "10 0.85");
-    sliderGroup.appendChild(path);
+    this.drawPath(sliderGroup, 90, 100, this.slider.color);
 
     // handle
-    const handle = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "circle"
-    );
-    const handleCenter = this.getHandleCenter(
-      (angle * this.PI2) / 360,
-      this.slider.radius
-    );
-    handle.setAttribute("cx", handleCenter.x);
-    handle.setAttribute("cy", handleCenter.y);
-    handle.setAttribute("r", 25 / 2);
-    handle.style.stroke = "blue";
-    handle.style.strokeWidth = 1;
-    handle.style.fill = "#fff";
-    sliderGroup.appendChild(handle);
+    this.drawHandle(sliderGroup, angle)
   }
 
   initPanel() {
@@ -107,6 +72,40 @@ class Slider {
     li.appendChild(colorSquare);
     li.appendChild(sliderName);
     slidersList.appendChild(li);
+  }
+
+  drawPath(group, start, end, color) {
+    const path = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "path"
+    );
+    path.setAttribute(
+      "d",
+      this.describeArc(this.cx, this.cy, this.slider.radius, start, end)
+    );
+    path.style.stroke = color;
+    path.style.strokeWidth = 25;
+    path.style.fill = "none";
+    path.setAttribute("stroke-dasharray", "10 2");
+    group.appendChild(path);
+  }
+
+  drawHandle(group, angle) {
+    const handle = document.createElementNS(
+      "http://www.w3.org/2000/svg",
+      "circle"
+    );
+    const handleCenter = this.getHandleCenter(
+      (angle * this.PI2) / 360,
+      this.slider.radius
+    );
+    handle.setAttribute("cx", handleCenter.x);
+    handle.setAttribute("cy", handleCenter.y);
+    handle.setAttribute("r", 25 / 2);
+    handle.style.stroke = "blue";
+    handle.style.strokeWidth = 1;
+    handle.style.fill = "#fff";
+    group.appendChild(handle);
   }
 
   getHandleCenter(angle, radius) {
