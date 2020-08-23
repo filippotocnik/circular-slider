@@ -55,7 +55,7 @@ class Slider {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute(
       "d",
-      "M 100 100 a 50 50 0 1 0 35 8"
+      "M 100 210 a 50 50 0 1 0 35 8"
     );
     path.style.stroke =  this.slider.color;
     path.style.strokeWidth = 25;
