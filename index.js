@@ -1,14 +1,8 @@
 class Slider {
-  constructor({ container, color, min, max, step, radius }) {
+  constructor({ container, sliders }) {
     this.DOMselector = container;
     this.element = document.querySelector(this.DOMselector);
-    this.slider = {
-      color,
-      min,
-      max,
-      step,
-      radius,
-    };
+    this.sliders = sliders;
     this.sliderHeight = 400;
     this.sliderWidth = 400;
     this.cx = this.sliderWidth / 2;
@@ -19,12 +13,8 @@ class Slider {
   }
 
   init() {
-    // this.initPanel();
+    this.initPanel();
 
-    this.drawSlider();
-  }
-
-  drawSlider() {
     const svgWrapper = document.createElement("div");
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("height", this.sliderHeight);
@@ -32,7 +22,11 @@ class Slider {
     svgWrapper.appendChild(svg);
     this.element.appendChild(svgWrapper);
 
-    const angle = Math.floor((this.slider.max - this.slider.min) * 360);
+    this.sliders.forEach((slider) => this.drawSlider(slider, svg));
+  }
+
+  drawSlider(slider, svg) {
+    const angle = Math.floor((slider.max - slider.min) * 360);
 
     const sliderGroup = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -40,19 +34,19 @@ class Slider {
     );
     sliderGroup.setAttribute(
       "transform",
-      "rotate(-90," + this.cx + "," + this.cy + ")"
+      `rotate(-90, ${this.cx} ${this.cy})`
     );
-    sliderGroup.setAttribute("rad", this.slider.radius);
+    sliderGroup.setAttribute("rad", slider.radius);
     svg.appendChild(sliderGroup);
 
     // bg
-    this.drawPath(sliderGroup, 0, 359, '#ccc');
-    
+    this.drawPath(sliderGroup, slider.radius, "#ccc", 0, 359);
+
     // slider
-    this.drawPath(sliderGroup, 90, 100, this.slider.color);
+    this.drawPath(sliderGroup, slider.radius, slider.color, 0, angle);
 
     // handle
-    this.drawHandle(sliderGroup, angle)
+    this.drawHandle(slider.radius, sliderGroup, angle);
   }
 
   initPanel() {
@@ -61,27 +55,26 @@ class Slider {
     slidersList.classList.add("sliders-list");
     infoPanel.appendChild(slidersList);
 
-    const li = document.createElement("li");
-    const sliderValue = document.createElement("span");
-    sliderValue.innerText = this.slider.min;
-    const colorSquare = document.createElement("span");
-    colorSquare.style.backgroundColor = this.slider.color;
-    const sliderName = document.createElement("span");
-    sliderName.innerText = "slider";
-    li.appendChild(sliderValue);
-    li.appendChild(colorSquare);
-    li.appendChild(sliderName);
-    slidersList.appendChild(li);
+    this.sliders.forEach((slider) => {
+      const li = document.createElement("li");
+      const sliderValue = document.createElement("span");
+      sliderValue.innerText = slider.min;
+      const colorSquare = document.createElement("span");
+      colorSquare.style.backgroundColor = slider.color;
+      const sliderName = document.createElement("span");
+      sliderName.innerText = slider.name;
+      li.appendChild(sliderValue);
+      li.appendChild(colorSquare);
+      li.appendChild(sliderName);
+      slidersList.appendChild(li);
+    });
   }
 
-  drawPath(group, start, end, color) {
-    const path = document.createElementNS(
-      "http://www.w3.org/2000/svg",
-      "path"
-    );
+  drawPath(group, radius, color, start, end) {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
     path.setAttribute(
       "d",
-      this.describeArc(this.cx, this.cy, this.slider.radius, start, end)
+      this.describeArc(this.cx, this.cy, radius, start, end)
     );
     path.style.stroke = color;
     path.style.strokeWidth = 25;
@@ -90,15 +83,12 @@ class Slider {
     group.appendChild(path);
   }
 
-  drawHandle(group, angle) {
+  drawHandle(radius, group, angle) {
     const handle = document.createElementNS(
       "http://www.w3.org/2000/svg",
       "circle"
     );
-    const handleCenter = this.getHandleCenter(
-      (angle * this.PI2) / 360,
-      this.slider.radius
-    );
+    const handleCenter = this.getHandleCenter((angle * this.PI2) / 360, radius);
     handle.setAttribute("cx", handleCenter.x);
     handle.setAttribute("cy", handleCenter.y);
     handle.setAttribute("r", 25 / 2);
@@ -147,9 +137,22 @@ class Slider {
 
 const slider = new Slider({
   container: "#app",
-  color: "#EE82EE",
-  min: 0,
-  max: 100,
-  step: 1,
-  radius: 100,
+  sliders: [
+    {
+      color: "#EE82EE",
+      min: 0,
+      max: 100,
+      step: 1,
+      radius: 140,
+      name: 'Slider2'
+    },
+    {
+      color: "yellow",
+      min: 0,
+      max: 100,
+      step: 1,
+      radius: 80,
+      name: "Slider1",
+    },
+  ],
 });
