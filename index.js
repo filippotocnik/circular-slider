@@ -8,6 +8,7 @@ class Slider {
     this.cx = this.sliderWidth / 2;
     this.cy = this.sliderHeight / 2;
     this.PI2 = Math.PI * 2;
+    this.closestSlider = null;
 
     this.init();
   }
@@ -15,6 +16,10 @@ class Slider {
   init() {
     this.initPanel();
 
+    this.initialDraw();
+  }
+
+  initialDraw() {
     const svgWrapper = document.createElement("div");
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("height", this.sliderHeight);
@@ -23,6 +28,30 @@ class Slider {
     this.element.appendChild(svgWrapper);
 
     this.sliders.forEach((slider) => this.drawSlider(slider, svg));
+
+    svgWrapper.addEventListener("mousedown", (event) => {
+      const containerRect = svgWrapper.getBoundingClientRect();
+      const x = event.clientX - containerRect.left;
+      const y = event.clientY - containerRect.top;
+
+      const distanceFromCenter = Math.hypot(x - this.cx, y - this.cy);
+
+      const slidersDistance = Array.from(
+        this.element.querySelectorAll("svg g")
+      ).map((slider) => ({
+        distance: Math.min(
+          Math.abs(distanceFromCenter - Number(slider.getAttribute("rad")))
+        ),
+        id: slider.id,
+      }));
+      const closestDistance = Math.min(
+        ...slidersDistance.map((slider) => slider.distance)
+      );
+      const closestSliderId = slidersDistance.filter(slider => slider.distance === closestDistance)[0].id;
+      this.closestSlider = document.getElementById(closestSliderId);
+    });
+
+    
   }
 
   drawSlider(slider, svg) {
@@ -32,11 +61,9 @@ class Slider {
       "http://www.w3.org/2000/svg",
       "g"
     );
-    sliderGroup.setAttribute(
-      "transform",
-      `rotate(-90, ${this.cx} ${this.cy})`
-    );
+    sliderGroup.setAttribute("transform", `rotate(-90, ${this.cx} ${this.cy})`);
     sliderGroup.setAttribute("rad", slider.radius);
+    sliderGroup.setAttribute("id", slider.name);
     svg.appendChild(sliderGroup);
 
     // bg
@@ -50,9 +77,14 @@ class Slider {
   }
 
   initPanel() {
-    const infoPanel = document.querySelector(".info-panel");
+    const infoPanel = document.createElement("div");
+    infoPanel.classList.add("info-panel");
+    const heading = document.createElement("h4");
+    heading.innerText = "Info panel";
     const slidersList = document.createElement("ul");
     slidersList.classList.add("sliders-list");
+    this.element.appendChild(infoPanel);
+    infoPanel.appendChild(heading);
     infoPanel.appendChild(slidersList);
 
     this.sliders.forEach((slider) => {
@@ -143,8 +175,8 @@ const slider = new Slider({
       min: 0,
       max: 100,
       step: 1,
-      radius: 140,
-      name: 'Slider2'
+      radius: 120,
+      name: "Slider2",
     },
     {
       color: "yellow",
@@ -153,6 +185,14 @@ const slider = new Slider({
       step: 1,
       radius: 80,
       name: "Slider1",
+    },
+    {
+      color: "red",
+      min: 0,
+      max: 100,
+      step: 1,
+      radius: 40,
+      name: "Slider3",
     },
   ],
 });
