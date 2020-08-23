@@ -8,7 +8,7 @@ class Slider {
     this.cx = this.sliderWidth / 2;
     this.cy = this.sliderHeight / 2;
     this.PI2 = Math.PI * 2;
-    this.closestSlider = null;
+    this.activeSlider = null;
     this.mouseDown = false;
 
     this.init();
@@ -33,27 +33,14 @@ class Slider {
     svgWrapper.addEventListener("mousedown", (event) => {
       if (this.mouseDown) return;
       this.mouseDown = true;
-      const containerRect = svgWrapper.getBoundingClientRect();
-      const x = event.clientX - containerRect.left;
-      const y = event.clientY - containerRect.top;
 
-      const distanceFromCenter = Math.hypot(x - this.cx, y - this.cy);
-
-      const slidersDistance = Array.from(
-        this.element.querySelectorAll("svg g")
-      ).map((slider) => ({
-        distance: Math.min(
-          Math.abs(distanceFromCenter - Number(slider.getAttribute("rad")))
-        ),
-        id: slider.id,
-      }));
-      const closestDistance = Math.min(
-        ...slidersDistance.map((slider) => slider.distance)
+      const { x, y } = this.getMouseCoordinates(
+        svgWrapper,
+        event.clientX,
+        event.clientY
       );
-      const closestSliderId = slidersDistance.filter(
-        (slider) => slider.distance === closestDistance
-      )[0].id;
-      this.closestSlider = document.getElementById(closestSliderId);
+
+      this.setActiveSlider({x, y});
 
       // update slider
       this.updateSlider({ x, y });
@@ -62,9 +49,11 @@ class Slider {
     svgWrapper.addEventListener("mousemove", (event) => {
       if (!this.mouseDown) return;
       event.preventDefault();
-      const containerRect = svgWrapper.getBoundingClientRect();
-      const x = event.clientX - containerRect.left;
-      const y = event.clientY - containerRect.top;
+      const { x, y } = this.getMouseCoordinates(
+        svgWrapper,
+        event.clientX,
+        event.clientY
+      );
 
       // update slider
       this.updateSlider({ x, y });
@@ -73,8 +62,35 @@ class Slider {
     svgWrapper.addEventListener("mouseup", (event) => {
       if (!this.mouseDown) return;
       this.mouseDown = false;
-      this.closestSlider = null;
+      this.activeSlider = null;
     });
+  }
+
+  getMouseCoordinates(element, eventX, eventY) {
+    const containerRect = element.getBoundingClientRect();
+    const x = eventX - containerRect.left;
+    const y = eventY - containerRect.top;
+    return { x, y };
+  }
+
+  setActiveSlider({x, y}) {
+    const distanceFromCenter = Math.hypot(x - this.cx, y - this.cy);
+
+    const slidersDistance = Array.from(
+      this.element.querySelectorAll("svg g")
+    ).map((slider) => ({
+      distance: Math.min(
+        Math.abs(distanceFromCenter - Number(slider.getAttribute("rad")))
+      ),
+      id: slider.id,
+    }));
+    const closestDistance = Math.min(
+      ...slidersDistance.map((slider) => slider.distance)
+    );
+    const closestSliderId = slidersDistance.filter(
+      (slider) => slider.distance === closestDistance
+    )[0].id;
+    this.activeSlider = document.getElementById(closestSliderId);
   }
 
   initPanel() {
@@ -161,8 +177,8 @@ class Slider {
   }
 
   updateSlider({ x, y }) {
-    const path = this.closestSlider.querySelector(".active-path");
-    const radius = this.closestSlider.getAttribute("rad");
+    const path = this.activeSlider.querySelector(".active-path");
+    const radius = this.activeSlider.getAttribute("rad");
     const currentAngle = this.getMouseAngle({ x, y });
 
     // console.log('currentAngle', currentAngle);
@@ -179,7 +195,7 @@ class Slider {
       )
     );
 
-    const handle = this.closestSlider.querySelector("circle");
+    const handle = this.activeSlider.querySelector("circle");
     const handleCenter = this.getHandleCenter(currentAngle, radius);
     // console.log('handleA', currentAngle)
     handle.setAttribute("cx", handleCenter.x);
@@ -190,7 +206,7 @@ class Slider {
 
   updatePanel(angle) {
     // console.log(this.sliders);
-    const sliderId = this.closestSlider.getAttribute("id");
+    const sliderId = this.activeSlider.getAttribute("id");
     const targetInfo = document.querySelector(
       `li[data-name="${sliderId}"] .info-value`
     );
