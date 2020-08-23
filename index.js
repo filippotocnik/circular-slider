@@ -9,6 +9,7 @@ class Slider {
     this.cy = this.sliderHeight / 2;
     this.PI2 = Math.PI * 2;
     this.closestSlider = null;
+    this.mouseDown = false;
 
     this.init();
   }
@@ -30,6 +31,8 @@ class Slider {
     this.sliders.forEach((slider) => this.drawSlider(slider, svg));
 
     svgWrapper.addEventListener("mousedown", (event) => {
+      if (this.mouseDown) return;
+      this.mouseDown = true;
       const containerRect = svgWrapper.getBoundingClientRect();
       const x = event.clientX - containerRect.left;
       const y = event.clientY - containerRect.top;
@@ -47,15 +50,35 @@ class Slider {
       const closestDistance = Math.min(
         ...slidersDistance.map((slider) => slider.distance)
       );
-      const closestSliderId = slidersDistance.filter(slider => slider.distance === closestDistance)[0].id;
+      const closestSliderId = slidersDistance.filter(
+        (slider) => slider.distance === closestDistance
+      )[0].id;
       this.closestSlider = document.getElementById(closestSliderId);
+
+      // update slider
+      this.updateSlider({ x, y });
     });
 
-    
+    svgWrapper.addEventListener("mousemove", (event) => {
+      if (!this.mouseDown) return;
+      event.preventDefault();
+      const containerRect = svgWrapper.getBoundingClientRect();
+      const x = event.clientX - containerRect.left;
+      const y = event.clientY - containerRect.top;
+
+      // update slider
+      this.updateSlider({ x, y });
+    });
+
+    svgWrapper.addEventListener("mouseup", (event) => {
+      if (!this.mouseDown) return;
+      this.mouseDown = false;
+      this.closestSlider = null;
+    });
   }
 
   drawSlider(slider, svg) {
-    const angle = Math.floor((slider.max - slider.min) * 360);
+    const angle = Math.floor((0 / (slider.max - slider.min)) * 360);
 
     const sliderGroup = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -67,10 +90,10 @@ class Slider {
     svg.appendChild(sliderGroup);
 
     // bg
-    this.drawPath(sliderGroup, slider.radius, "#ccc", 0, 359);
+    this.drawPath(sliderGroup, slider.radius, "#ccc", 0, 359, "pasive");
 
     // slider
-    this.drawPath(sliderGroup, slider.radius, slider.color, 0, angle);
+    this.drawPath(sliderGroup, slider.radius, slider.color, 0, angle, "active");
 
     // handle
     this.drawHandle(slider.radius, sliderGroup, angle);
@@ -102,8 +125,11 @@ class Slider {
     });
   }
 
-  drawPath(group, radius, color, start, end) {
+  drawPath(group, radius, color, start, end, type) {
     const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    if (type === "active") {
+      path.classList.add("active-path");
+    }
     path.setAttribute(
       "d",
       this.describeArc(this.cx, this.cy, radius, start, end)
@@ -128,6 +154,37 @@ class Slider {
     handle.style.strokeWidth = 1;
     handle.style.fill = "#fff";
     group.appendChild(handle);
+  }
+
+  updateSlider({ x, y }) {
+    const path = this.closestSlider.querySelector(".active-path");
+    const radius = this.closestSlider.getAttribute("rad");
+    const currentAngle = this.getMouseAngle({ x, y }) * 0.9 + 90;
+
+    path.setAttribute(
+      "d",
+      this.describeArc(
+        this.cx,
+        this.cy,
+        radius,
+        0,
+        currentAngle / (Math.PI / 180)
+      )
+    );
+
+    const handle = this.closestSlider.querySelector("circle");
+    const handleCenter = this.getHandleCenter(currentAngle, radius);
+    handle.setAttribute("cx", handleCenter.x);
+    handle.setAttribute("cy", handleCenter.y);
+  }
+
+  getMouseAngle({ x, y }) {
+    const angle = Math.atan2(y - this.cy, x - this.cx);
+    if (angle > (-Math.PI * 2) / 2 && angle < (-Math.PI * 2) / 4) {
+      return angle + Math.PI * 2 * 1.25;
+    } else {
+      return angle + Math.PI * 2 * 0.25;
+    }
   }
 
   getHandleCenter(angle, radius) {
