@@ -30,7 +30,7 @@ class Slider {
 
     this.sliders.forEach((slider) => this.drawSlider(slider, svg));
 
-    svgWrapper.addEventListener("mousedown", (event) => {
+    svg.addEventListener("mousedown", (event) => {
       if (this.mouseDown) return;
       this.mouseDown = true;
 
@@ -46,7 +46,7 @@ class Slider {
       this.updateSlider({ x, y });
     });
 
-    svgWrapper.addEventListener("mousemove", (event) => {
+    svg.addEventListener("mousemove", (event) => {
       if (!this.mouseDown) return;
       event.preventDefault();
       const { x, y } = this.getMouseCoordinates(
@@ -59,20 +59,20 @@ class Slider {
       this.updateSlider({ x, y });
     });
 
-    svgWrapper.addEventListener("mouseup", (event) => {
+    svg.addEventListener("mouseup", (event) => {
       if (!this.mouseDown) return;
       this.mouseDown = false;
       this.activeSlider = null;
     });
 
-    svgWrapper.addEventListener("touchstart", (event) => {
+    svg.addEventListener("touchstart", (event) => {
       if (this.mouseDown) return;
       this.mouseDown = true;
 
       const { x, y } = this.getMouseCoordinates(
         svgWrapper,
-        event.clientX,
-        event.clientY
+        event.targetTouches[0].pageX,
+        event.targetTouches[0].pageY
       );
 
       this.setActiveSlider({x, y});
@@ -81,27 +81,25 @@ class Slider {
       this.updateSlider({ x, y });
     });
 
-    svgWrapper.addEventListener("touchmove", (event) => {
+    svg.addEventListener("touchmove", (event) => {
       if (!this.mouseDown) return;
       event.preventDefault();
       const { x, y } = this.getMouseCoordinates(
         svgWrapper,
-        event.clientX,
-        event.clientY
+        event.targetTouches[0].pageX,
+        event.targetTouches[0].pageY
       );
 
       // update slider
       this.updateSlider({ x, y });
     });
 
-    svgWrapper.addEventListener("touchend", (event) => {
+    svg.addEventListener("touchend", (event) => {
       if (!this.mouseDown) return;
       this.mouseDown = false;
       this.activeSlider = null;
     });
   }
-
-  
 
   getMouseCoordinates(element, eventX, eventY) {
     const containerRect = element.getBoundingClientRect();
