@@ -14,11 +14,18 @@ body {
 
 #app {
   display: flex;
-  width: 800px;
-  height: 800px;
+}
+
+@media only screen and (max-width: 600px) {
+  #app {
+    flex-direction: column;
+  }
 }
 
 .info-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 1rem 1rem 0 0;
   list-style: none;
 }
@@ -30,6 +37,7 @@ body {
 .info-panel li {
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-bottom: 1rem;
 }
 
@@ -39,7 +47,7 @@ body {
 
 .info-panel li span:first-child {
   font-size: 1.25rem;
-  font-weight: 400;  
+  font-weight: 400;
   margin: 0 0.5rem;
 }
 
