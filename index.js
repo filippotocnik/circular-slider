@@ -3,8 +3,8 @@ class Slider {
     this.DOMselector = container;
     this.element = document.querySelector(this.DOMselector);
     this.sliders = sliders;
-    this.sliderHeight = 400;
-    this.sliderWidth = 400;
+    this.sliderHeight = 600;
+    this.sliderWidth = 600;
     this.cx = this.sliderWidth / 2;
     this.cy = this.sliderHeight / 2;
     this.PI2 = Math.PI * 2;
@@ -16,7 +16,6 @@ class Slider {
 
   init() {
     this.initPanel();
-
     this.initialDraw();
   }
 
@@ -30,34 +29,15 @@ class Slider {
 
     this.sliders.forEach((slider) => this.drawSlider(slider, svg));
 
-    svg.addEventListener("mousedown", (event) => {
-      if (this.mouseDown) return;
-      this.mouseDown = true;
+    svg.addEventListener(
+      "mousedown",
+      this.startHandlerWrapper(event, svgWrapper)
+    );
 
-      const { x, y } = this.getMouseCoordinates(
-        svgWrapper,
-        event.clientX,
-        event.clientY
-      );
-
-      this.setActiveSlider({x, y});
-
-      // update slider
-      this.updateSlider({ x, y });
-    });
-
-    svg.addEventListener("mousemove", (event) => {
-      if (!this.mouseDown) return;
-      event.preventDefault();
-      const { x, y } = this.getMouseCoordinates(
-        svgWrapper,
-        event.clientX,
-        event.clientY
-      );
-
-      // update slider
-      this.updateSlider({ x, y });
-    });
+    svg.addEventListener(
+      "mousemove",
+      this.moveHandlerWrapper(event, svgWrapper)
+    );
 
     svg.addEventListener("mouseup", (event) => {
       if (!this.mouseDown) return;
@@ -65,50 +45,20 @@ class Slider {
       this.activeSlider = null;
     });
 
-    svg.addEventListener("touchstart", (event) => {
-      if (this.mouseDown) return;
-      this.mouseDown = true;
+    svg.addEventListener(
+      "touchstart",
+      this.startHandlerWrapper(event, svgWrapper)
+    );
 
-      const { x, y } = this.getMouseCoordinates(
-        svgWrapper,
-        event.targetTouches[0].pageX,
-        event.targetTouches[0].pageY
-      );
+    svg.addEventListener(
+      "touchmove",
+      this.moveHandlerWrapper(event, svgWrapper)
+    );
 
-      this.setActiveSlider({x, y});
-
-      // update slider
-      this.updateSlider({ x, y });
-    });
-
-    svg.addEventListener("touchmove", (event) => {
-      if (!this.mouseDown) return;
-      event.preventDefault();
-      const { x, y } = this.getMouseCoordinates(
-        svgWrapper,
-        event.targetTouches[0].pageX,
-        event.targetTouches[0].pageY
-      );
-
-      // update slider
-      this.updateSlider({ x, y });
-    });
-
-    svg.addEventListener("touchend", (event) => {
-      if (!this.mouseDown) return;
-      this.mouseDown = false;
-      this.activeSlider = null;
-    });
+    svg.addEventListener("touchend", this.endHandlerWrapper(event));
   }
 
-  getMouseCoordinates(element, eventX, eventY) {
-    const containerRect = element.getBoundingClientRect();
-    const x = eventX - containerRect.left;
-    const y = eventY - containerRect.top;
-    return { x, y };
-  }
-
-  setActiveSlider({x, y}) {
+  setActiveSlider({ x, y }) {
     const distanceFromCenter = Math.hypot(x - this.cx, y - this.cy);
 
     const slidersDistance = Array.from(
@@ -157,9 +107,7 @@ class Slider {
   }
 
   drawSlider(slider, svg) {
-    const angle = Math.floor((0 / (slider.max - slider.min)) * 360);
-
-    // console.log('angle', angle)
+    const angle = Math.floor((slider.max - slider.min) * 360);
 
     const sliderGroup = document.createElementNS(
       "http://www.w3.org/2000/svg",
@@ -170,13 +118,10 @@ class Slider {
     sliderGroup.setAttribute("id", slider.name);
     svg.appendChild(sliderGroup);
 
-    // bg
     this.drawPath(sliderGroup, slider.radius, "#ccc", 0, 359, "pasive");
 
-    // slider
     this.drawPath(sliderGroup, slider.radius, slider.color, 0, angle, "active");
 
-    // handle
     this.drawHandle(slider.radius, sliderGroup, angle);
   }
 
@@ -215,10 +160,6 @@ class Slider {
     const path = this.activeSlider.querySelector(".active-path");
     const radius = this.activeSlider.getAttribute("rad");
     const currentAngle = this.getMouseAngle({ x, y });
-
-    // console.log('currentAngle', currentAngle);
-    // debugger;
-
     path.setAttribute(
       "d",
       this.describeArc(
@@ -232,7 +173,6 @@ class Slider {
 
     const handle = this.activeSlider.querySelector("circle");
     const handleCenter = this.getHandleCenter(currentAngle, radius);
-    // console.log('handleA', currentAngle)
     handle.setAttribute("cx", handleCenter.x);
     handle.setAttribute("cy", handleCenter.y);
 
@@ -240,7 +180,6 @@ class Slider {
   }
 
   updatePanel(angle) {
-    // console.log(this.sliders);
     const sliderId = this.activeSlider.getAttribute("id");
     const targetInfo = document.querySelector(
       `li[data-name="${sliderId}"] .info-value`
@@ -258,13 +197,55 @@ class Slider {
     targetInfo.innerText = currentValue;
   }
 
+  startHandlerWrapper(event, svg) {
+    return (event) => {
+      if (this.mouseDown) return;
+      this.mouseDown = true;
+
+      const { x, y } = this.getMouseCoordinates(
+        svg,
+        event.clientX,
+        event.clientY
+      );
+      this.setActiveSlider({ x, y });
+      this.updateSlider({ x, y });
+    };
+  }
+
+  moveHandlerWrapper(event, svg) {
+    return (event) => {
+      if (!this.mouseDown) return;
+      event.preventDefault();
+      const { x, y } = this.getMouseCoordinates(
+        svg,
+        event.clientX,
+        event.clientY
+      );
+
+      this.updateSlider({ x, y });
+    };
+  }
+
+  endHandlerWrapper(event) {
+    return (event) => {
+      if (!this.mouseDown) return;
+      this.mouseDown = false;
+      this.activeSlider = null;
+    };
+  }
+
+  getMouseCoordinates(element, eventX, eventY) {
+    const containerRect = element.getBoundingClientRect();
+    const x = eventX - containerRect.left;
+    const y = eventY - containerRect.top;
+    return { x, y };
+  }
+
   getMouseAngle({ x, y }) {
     const angle = Math.atan2(y - this.cy, x - this.cx);
     if (angle > -this.PI2 / 2 && angle < -this.PI2 / 4) {
-      // console.log('newA', angle + this.PI2 * 1.25)
       return angle + this.PI2 * 1.25;
     } else {
-      // console.log('newA', angle + this.PI2 * 0.25)
       return angle + this.PI2 * 0.25;
     }
   }
@@ -319,7 +300,7 @@ const slider = new Slider({
       max: 100,
       step: 1,
       radius: 120,
-      name: "Slider2",
+      name: "Transportation",
     },
     {
       color: "yellow",
@@ -327,7 +308,7 @@ const slider = new Slider({
       max: 100,
       step: 1,
       radius: 80,
-      name: "Slider1",
+      name: "Food",
     },
     {
       color: "red",
@@ -335,7 +316,23 @@ const slider = new Slider({
       max: 100,
       step: 1,
       radius: 40,
-      name: "Slider3",
+      name: "Gas",
+    },
+    {
+      color: "blue",
+      min: 0,
+      max: 20,
+      step: 5,
+      radius: 160,
+      name: "Insurance",
+    },
+    {
+      color: "green",
+      min: 100,
+      max: 220,
+      step: 10,
+      radius: 200,
+      name: "Dog",
     },
   ],
 });
